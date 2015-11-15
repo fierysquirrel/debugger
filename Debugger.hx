@@ -1,4 +1,4 @@
-package fs.debugger;
+package;
 
 import flash.display.Sprite;
 import flash.events.Event;
@@ -6,11 +6,7 @@ import flash.events.EventDispatcher;
 import flash.events.KeyboardEvent;
 import flash.events.MouseEvent;
 import flash.events.TouchEvent;
-import fs.screenmanager.console.Console;
-import fs.screenmanager.Debugging;
-import fs.screenmanager.events.GameEvent;
-import fs.screenmanager.events.GameEvents;
-import fs.screenmanager.transitions.Transition;
+import openfl.display.FPS;
 
 /**
  * 
@@ -19,6 +15,13 @@ import fs.screenmanager.transitions.Transition;
  */
 class Debugger
 {
+	var fps : FPS;
+	
+	var screenWidth : Int;
+	var screenHeight : Int;
+	var consoleWindow : Console;
+	//var inspectorWindow : Inspector;
+	
 	/*
 	 * Screen manager instance.
 	 */
@@ -35,10 +38,10 @@ class Debugger
 	private static var container : Sprite;
 	
 	
-	public static function InitInstance(mainSprite : Sprite): Debugger
+	public static function InitInstance(cont : Sprite, width : Int, height : Int): Debugger
 	{
 		if (instance == null)
-			instance = new Debugger(mainSprite);
+			instance = new Debugger(cont,width,height);
 		
 		return instance;
 	}
@@ -58,17 +61,54 @@ class Debugger
 	/*
 	 * Constructor
 	 */
-	private function new(mainSprite : Sprite) 
+	private function new(cont : Sprite, width : Int, height : Int) 
 	{
+		container = cont;
+		
+		var test : DraggableWindow;
+		var con : Console;
+		
+		screenWidth = width;
+		screenHeight = height;
+		// Add an FPS counter
+        fps = new FPS();
+		
+		//FPS
+		//debugContainer.addChild(fps);
+		fps.visible = false;
+		fps.textColor = 0xffffff;
+		
 		//Event dispatcher
 		eventDispatcher = new EventDispatcher();
-		//Game Container
-		container = new Sprite();
 		
-		//Adding containers to the main sprite (class Main)
-		mainSprite.addChild(container);
+		//test = new DraggableWindow(100, 100, 400, 200, 0x000000, eventDispatcher);
+		con = Console.GetInstance(0, screenHeight/2, screenWidth, screenHeight/2, eventDispatcher);
 		
-		eventDispatcher.addEventListener(GameEvents.EVENT_TRACE_SCREENS, HandleEvent);
+		//container.addChild(test);
+		//container.addChild(con);
+		
+		//Console 
+		//consoleWindow = Console.GetInstance(GraphicManager.GetWidth() / 2, GraphicManager.GetHeight() / 2, 500, 300, eventDispatcher);
+		//inspectorWindow = Inspector.GetInstance(GraphicManager.GetWidth() / 2, GraphicManager.GetHeight() / 2, GraphicManager.GetWidth() / 4, GraphicManager.GetHeight() / 1.5, eventDispatcher);
+		
+		//eventDispatcher.addEventListener(GameEvents.EVENT_TRACE_SCREENS, HandleEvent);
+	}
+	
+	/*function CloseConsole()
+	{
+		fixedContainer.removeChild(consoleWindow);
+		isDebugging = false;
+	}
+	
+	function CloseInspector()
+	{
+		fixedContainer.removeChild(inspectorWindow);
+		isInspecting = false;
+	}*/
+	
+	public static function Print(text : String) : Void
+	{
+		Console.Print(text);
 	}
 	
 	public static function GetEventDispatcher() : EventDispatcher
@@ -91,7 +131,7 @@ class Debugger
 	 * Usually it handles resources and all programmer's set content.
 	 * .
 	 */
-	public static function Destroy()
+	public static function Destroy() : Void
 	{
 	}
 	
@@ -99,7 +139,7 @@ class Debugger
 	 * Clean
 	 * .
 	 */
-	public static function Clean()
+	public static function Clean() : Void
 	{
 	}
 	
@@ -117,35 +157,8 @@ class Debugger
 	 * 
 	 * @param event the passed event to be handled.
 	 */
-	public static function HandleEvent(event : GameEvent)
-	{
-		if (currentScreen != null)
-		{
-			if(currentScreen.GetName() == event.GetSource() || event.GetSource() == Console.NAME)
-				currentScreen.HandleEvent(event);
-		}		
-	}
-	
-	/*
-	 * Handles the event passed from the main.
-	 * 
-	 * @param event the passed event to be handled.
-	 */
 	public static function HandleKeyboardEvent(event : KeyboardEvent) : Void
 	{
-		if (currentScreen != null)
-		{
-			if (currentScreen.IsActive())
-			{
-				switch(event.type)
-				{
-					case KeyboardEvent.KEY_DOWN:
-						currentScreen.HandleKeyDownEvent(event.keyCode);
-					case KeyboardEvent.KEY_UP:
-						currentScreen.HandleKeyUpEvent(event.keyCode);
-				}
-			}
-		}
 	}
 	
 	/*
@@ -155,24 +168,6 @@ class Debugger
 	 */
 	public static function HandleMouseEvent(event : MouseEvent) : Void
 	{
-		var e : MouseEvent;
-		if (currentScreen != null)
-		{
-			if (currentScreen.IsActive())
-			{
-				switch(event.type)
-				{
-					case MouseEvent.MOUSE_DOWN:
-						currentScreen.HandleMouseDownEvent(event);
-					case MouseEvent.MOUSE_UP:
-						currentScreen.HandleMouseUpEvent(event);
-					case MouseEvent.MOUSE_MOVE:
-						currentScreen.HandleMouseMoveEvent(event);
-					case MouseEvent.CLICK:
-						currentScreen.HandleMouseClickEvent(event);
-				}
-			}
-		}
 	}
 	
 	/*
@@ -183,23 +178,6 @@ class Debugger
 	public static function HandleTouchEvent(event : TouchEvent) : Void
 	{
 		var e : MouseEvent;
-		if (currentScreen != null)
-		{
-			if (currentScreen.IsActive())
-			{
-				switch(event.type)
-				{
-					case TouchEvent.TOUCH_BEGIN:
-						currentScreen.HandleTouchDownEvent(event);
-					case TouchEvent.TOUCH_END:
-						currentScreen.HandleTouchUpEvent(event);
-					case TouchEvent.TOUCH_MOVE:
-						currentScreen.HandleTouchMoveEvent(event);
-					case TouchEvent.TOUCH_TAP:
-						currentScreen.HandleTouchTapEvent(event);
-				}
-			}
-		}
 	}
 	
 	/*
@@ -208,17 +186,15 @@ class Debugger
 	private static function TraceScreens(): Void
 	{
 		trace("/n");
-		for (s in screens)
-			trace(s.GetName() + " " + s.IsActive());
+		//for (s in screens)
+			//trace(s.GetName() + " " + s.IsActive());
 	}
 	
 	public static function HandleBackButtonPressed(e : Event) : Void
 	{
-		currentScreen.HandleBackButtonPressed(e);
 	}
 	
 	public static function HandleBackButtonReleased(e : Event) : Void
 	{
-		currentScreen.HandleBackButtonReleased(e);
 	}
 }
