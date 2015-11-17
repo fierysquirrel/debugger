@@ -15,11 +15,11 @@ import openfl.display.FPS;
  */
 class Debugger
 {
-	var fps : FPS;
+	private static var fps : FPS;
 	
-	var screenWidth : Int;
-	var screenHeight : Int;
-	var consoleWindow : Console;
+	private static var screenWidth : Int;
+	private static var screenHeight : Int;
+	private static var consoleWindow : Console;
 	//var inspectorWindow : Inspector;
 	
 	/*
@@ -74,7 +74,7 @@ class Debugger
         fps = new FPS();
 		
 		//FPS
-		//debugContainer.addChild(fps);
+		container.addChild(fps);
 		fps.visible = false;
 		fps.textColor = 0xffffff;
 		
@@ -109,6 +109,11 @@ class Debugger
 	public static function Print(text : String) : Void
 	{
 		Console.Print(text);
+	}
+	
+	public static function ShowFPS() : Void
+	{
+		fps.visible = true;
 	}
 	
 	public static function GetEventDispatcher() : EventDispatcher
