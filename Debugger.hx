@@ -65,9 +65,6 @@ class Debugger
 	{
 		container = cont;
 		
-		var test : DraggableWindow;
-		var con : Console;
-		
 		screenWidth = width;
 		screenHeight = height;
 		// Add an FPS counter
@@ -82,7 +79,7 @@ class Debugger
 		eventDispatcher = new EventDispatcher();
 		
 		//test = new DraggableWindow(100, 100, 400, 200, 0x000000, eventDispatcher);
-		con = Console.GetInstance(0, screenHeight/2, screenWidth, screenHeight/2, eventDispatcher);
+		consoleWindow = Console.GetInstance(0, screenHeight/2, screenWidth, screenHeight/2, eventDispatcher);
 		
 		//container.addChild(test);
 		//container.addChild(con);
@@ -92,6 +89,16 @@ class Debugger
 		//inspectorWindow = Inspector.GetInstance(GraphicManager.GetWidth() / 2, GraphicManager.GetHeight() / 2, GraphicManager.GetWidth() / 4, GraphicManager.GetHeight() / 1.5, eventDispatcher);
 		
 		//eventDispatcher.addEventListener(GameEvents.EVENT_TRACE_SCREENS, HandleEvent);
+	}
+	
+	public static function ShowConsole() : Void
+	{
+		container.addChild(consoleWindow);
+	}
+	
+	public static function CloseConsole() : Void
+	{
+		container.removeChild(consoleWindow);
 	}
 	
 	/*function CloseConsole()
